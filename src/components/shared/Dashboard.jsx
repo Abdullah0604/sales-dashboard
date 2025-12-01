@@ -1,0 +1,37 @@
+"use client";
+
+import { useState } from "react";
+import { SalesFilters } from "./SalesFilters";
+
+export default function Dashboard() {
+  const [filters, setFilters] = useState({
+    startDate: new Date(new Date().setDate(new Date().getDate() - 30))
+      .toISOString()
+      .split("T")[0],
+    endDate: new Date().toISOString().split("T")[0],
+    minPrice: "",
+    email: "",
+    phone: "",
+  });
+
+  const handleFilterChange = (newFilters) => {
+    setFilters(newFilters);
+  };
+
+  return (
+    <div className="mx-auto max-w-7xl">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-foreground">Sales Dashboard</h1>
+        <p className="mt-2 text-muted-foreground">
+          Track and analyze your sales performance
+        </p>
+      </div>
+
+      {/* Filters */}
+      <div className="mb-8">
+        <SalesFilters filters={filters} onFilterChange={handleFilterChange} />
+      </div>
+    </div>
+  );
+}
