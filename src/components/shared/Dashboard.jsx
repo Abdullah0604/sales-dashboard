@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { SalesFilters } from "./SalesFilters";
+import { Card } from "../ui/card";
+import { SalesChart } from "./SalesChart";
 
 export default function Dashboard() {
   const [filters, setFilters] = useState({
@@ -31,6 +33,15 @@ export default function Dashboard() {
       {/* Filters */}
       <div className="mb-8">
         <SalesFilters filters={filters} onFilterChange={handleFilterChange} />
+      </div>
+      {/* Chart */}
+      <div className="mb-8">
+        <Card className="p-6">
+          <h2 className="mb-6 text-xl font-semibold text-foreground">
+            Total Sales Over Time
+          </h2>
+          <SalesChart filters={filters} />
+        </Card>
       </div>
     </div>
   );
