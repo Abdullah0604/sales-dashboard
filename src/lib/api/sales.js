@@ -2,7 +2,7 @@ export async function fetchSalesData(queries) {
   const {
     startDate,
     endDate,
-    priceMin = "",
+    minPrice = 0,
     email = "",
     phone = "",
     sortBy = "date",
@@ -12,10 +12,9 @@ export async function fetchSalesData(queries) {
     token,
     isTotalSales,
   } = queries;
-  console.log(queries);
+  // console.log(queries);
 
-  const searchQueries = `startDate=${startDate}&endDate=${endDate}&priceMin=${priceMin}&email=${email}&phone=${phone}&sortBy=${sortBy}&sortOrder=${sortOrder}&after=${after}&before=${before}`;
-
+  // this 'if block' is for total sales chart because filters, sorting and pagination will effect on only table not on chart.
   if (isTotalSales) {
     const res = await fetch(
       "https://autobizz-425913.uc.r.appspot.com/sales?startDate=2025-01-01&endDate=2025-01-31&priceMin=10&email=&phone=&sortBy=date&sortOrder=asc&after=&before=",
@@ -26,13 +25,13 @@ export async function fetchSalesData(queries) {
         },
       }
     );
-    if (!res.ok) throw new Error("Failed to fetch token");
-
+    if (!res.ok) throw new Error("Failed to fetch sales data");
     const data = await res.json();
-    console.log(data);
-
     return data.results.TotalSales;
   }
+
+  const searchQueries = `startDate=${startDate}&endDate=${endDate}&priceMin=${minPrice}&email=${email}&phone=${phone}&sortBy=${sortBy}&sortOrder=${sortOrder}&after=${after}&before=${before}`;
+
   const res = await fetch(
     `https://autobizz-425913.uc.r.appspot.com/sales?${searchQueries}`,
     {
@@ -43,10 +42,13 @@ export async function fetchSalesData(queries) {
     }
   );
 
-  if (!res.ok) throw new Error("Failed to fetch token");
+  if (!res.ok) throw new Error("Failed to fetch sales data");
 
   const data = await res.json();
-  console.log(res, data);
+  // console.log(data.pagination);
 
-  return data.results;
+  return {
+    paginationTokens: data.pagination,
+    salesData: data.results.Sales,
+  };
 }

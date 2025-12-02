@@ -20,19 +20,10 @@ export default function Dashboard() {
     email: "",
     phone: "",
   });
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
-  const [paginationToken, setPaginationToken] = useState({});
-  const [currentPage, setCurrentPage] = useState(0);
-
   const handleFilterChange = (newFilters) => {
     setFilters(newFilters);
   };
-  const handleSort = (key) => {
-    setSortConfig((prev) => ({
-      key,
-      direction: prev.key === key && prev.direction === "asc" ? "desc" : "asc",
-    }));
-  };
+
   if (isLoading) return <Loading message="Fetching token..." />;
   if (isError) return <Error message="Failed to fetch token!" />;
   // console.log("autobizz token: ", token);
@@ -66,15 +57,7 @@ export default function Dashboard() {
           <h2 className="mb-6 text-xl font-semibold text-foreground">
             Sales Transactions
           </h2>
-          <SalesTable
-            filters={filters}
-            sortConfig={sortConfig}
-            onSort={handleSort}
-            paginationToken={paginationToken}
-            onPaginationChange={setPaginationToken}
-            currentPage={currentPage}
-            onPageChange={setCurrentPage}
-          />
+          <SalesTable filters={filters} />
         </Card>
       </div>
     </div>

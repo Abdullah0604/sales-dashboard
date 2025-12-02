@@ -1,6 +1,5 @@
 "use client";
 
-import { useMemo } from "react";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import {
   Table,
@@ -11,94 +10,85 @@ import {
 } from "@/components/ui/table";
 import SalesTableRow from "./SalesTableRow";
 import SalesPagination from "./SalesPagination";
+import { useAuthToken } from "@/hooks/useAuthToken";
+import { Loading } from "./Loading";
+import { Error } from "./Error";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { fetchSalesData } from "@/lib/api/sales";
 
-// Mock data generator
-function generateMockTableData(filters) {
-  const items = [];
-  const startDate = new Date(filters.startDate);
-  const endDate = new Date(filters.endDate);
+export function SalesTable({ filters }) {
+  const { data: authToken } = useAuthToken();
+  const [sortConfig, setSortConfig] = useState({
+    sortBy: "date",
+    sortOrder: "asc",
+  });
+  const [paginationToken, setPaginationToken] = useState({
+    before: "",
+    after: "",
+  });
+  const [pageCount, setPageCount] = useState(0);
+  const [historyStack, setHistoryStack] = useState([]);
 
-  for (let i = 0; i < 150; i++) {
-    const randomDate = new Date(
-      startDate.getTime() +
-        Math.random() * (endDate.getTime() - startDate.getTime())
-    );
-    const price = Math.round(Math.random() * 5000 + 100);
-    const minPrice = filters.minPrice ? Number.parseInt(filters.minPrice) : 0;
-
-    items.push({
-      id: `sale-${i}`,
-      date: randomDate.toISOString().split("T")[0],
-      price,
-      email: `customer${i}@example.com`,
-      phone: `+1 ${Math.random().toString().slice(2, 5)} ${Math.random()
-        .toString()
-        .slice(2, 5)} ${Math.random().toString().slice(2, 6)}`,
-      status: ["completed", "pending", "failed"][Math.floor(Math.random() * 3)],
-    });
-  }
-
-  // Apply filters
-  return items
-    .filter(
-      (item) =>
-        !filters.minPrice || item.price >= Number.parseInt(filters.minPrice)
-    )
-    .filter(
-      (item) =>
-        !filters.email ||
-        item.email.toLowerCase().includes(filters.email.toLowerCase())
-    )
-    .filter((item) => !filters.phone || item.phone.includes(filters.phone));
-}
-
-export function SalesTable({
-  filters,
-  sortConfig,
-  onSort,
-  paginationToken,
-  onPaginationChange,
-  currentPage,
-  onPageChange,
-}) {
-  const allData = useMemo(() => generateMockTableData(filters), [filters]);
-  // Sort data
-  const sortedData = useMemo(() => {
-    const data = [...allData];
-    if (sortConfig.key) {
-      data.sort((a, b) => {
-        const aVal = sortConfig.key === "date" ? new Date(a.date) : a.price;
-        const bVal = sortConfig.key === "date" ? new Date(b.date) : b.price;
-        const comparison = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
-        return sortConfig.direction === "asc" ? comparison : -comparison;
-      });
-    }
-    return data;
-  }, [allData, sortConfig]);
-
-  // Paginate data
-  const pageSize = 50;
-  const totalPages = Math.ceil(sortedData.length / pageSize);
-  const startIdx = currentPage * pageSize;
-  const paginatedData = sortedData.slice(startIdx, startIdx + pageSize);
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["sales", authToken, filters, sortConfig, paginationToken],
+    queryFn: () =>
+      fetchSalesData({
+        ...filters,
+        sortBy: sortConfig.sortBy,
+        sortOrder: sortConfig.sortOrder,
+        token: authToken,
+        before: paginationToken.before,
+        after: paginationToken.after,
+      }),
+    enabled: !!authToken,
+  });
+  if (isLoading) return <Loading message="Fetching total sales..." />;
+  if (isError) return <Error message="Failed to fetch total sales!" />;
 
   const handleNextPage = () => {
-    if (currentPage < totalPages - 1) {
-      onPageChange(currentPage + 1);
-    }
+    const newToken = data.paginationTokens.after;
+    if (!newToken) return;
+
+    setHistoryStack((prev) => [...prev, paginationToken]);
+
+    setPaginationToken({
+      before: "",
+      after: newToken,
+    });
+
+    setPageCount((prev) => prev + 1);
   };
 
   const handlePrevPage = () => {
-    if (currentPage > 0) {
-      onPageChange(currentPage - 1);
-    }
+    if (historyStack.length === 0) return;
+
+    const prevState = historyStack[historyStack.length - 1];
+
+    setHistoryStack(historyStack.slice(0, -1));
+
+    setPaginationToken(prevState);
+
+    setPageCount((prev) => prev - 1);
   };
 
+  const handleSort = (sortBy) => {
+    setSortConfig((prev) => ({
+      sortBy,
+      sortOrder:
+        prev.sortBy === sortBy && prev.sortOrder === "asc" ? "desc" : "asc",
+    }));
+  };
   const SortIcon = ({ column }) => {
-    if (sortConfig.key !== column) {
-      return <div className="h-4 w-4" />;
+    const isActive = sortConfig.sortBy === column;
+
+    // If this column is not being sorted
+    if (!isActive) {
+      return <ChevronUp className="h-4 w-4 opacity-30" />; // inactive state
     }
-    return sortConfig.direction === "asc" ? (
+
+    // If active → show correct direction
+    return sortConfig.sortOrder === "asc" ? (
       <ChevronUp className="h-4 w-4" />
     ) : (
       <ChevronDown className="h-4 w-4" />
@@ -113,29 +103,30 @@ export function SalesTable({
             <TableRow>
               <TableHead className="w-32">
                 <button
-                  onClick={() => onSort("date")}
-                  className="flex items-center gap-2 hover:text-foreground"
+                  onClick={() => handleSort("date")}
+                  className="flex items-center gap-2 hover:text-foreground text-gray-800"
                 >
                   Date
                   <SortIcon column="date" />
                 </button>
               </TableHead>
+
               <TableHead className="w-24">
                 <button
-                  onClick={() => onSort("price")}
-                  className="flex items-center gap-2 hover:text-foreground"
+                  onClick={() => handleSort("price")}
+                  className="flex items-center gap-2 hover:text-foreground text-gray-800"
                 >
                   Price
                   <SortIcon column="price" />
                 </button>
               </TableHead>
-              <TableHead className="min-w-48">Email</TableHead>
-              <TableHead className="min-w-40">Phone</TableHead>
+              <TableHead className="text-gray-800">Email</TableHead>
+              <TableHead className="text-gray-800">Phone</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paginatedData.map((item) => (
-              <SalesTableRow key={item.id} item={item} />
+            {data.salesData.map((item) => (
+              <SalesTableRow key={item._id} item={item} />
             ))}
           </TableBody>
         </Table>
@@ -143,15 +134,9 @@ export function SalesTable({
 
       {/* Pagination */}
       <SalesPagination
-        pagination={{
-          startIdx,
-          pageSize,
-          sortedData,
-          handleNextPage,
-          handlePrevPage,
-          currentPage,
-          totalPages,
-        }}
+        pageCount={pageCount}
+        handlePrevPage={handlePrevPage}
+        handleNextPage={handleNextPage}
       />
     </div>
   );

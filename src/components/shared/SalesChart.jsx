@@ -3,7 +3,7 @@
 import { useAuthToken } from "@/hooks/useAuthToken";
 import { fetchSalesData } from "@/lib/api/sales";
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+
 import {
   LineChart,
   Line,
@@ -16,22 +16,6 @@ import {
 } from "recharts";
 import { Loading } from "./Loading";
 import { Error } from "./Error";
-// Mock data generator
-function generateMockChartData(filters) {
-  const data = [];
-  const startDate = new Date(filters.startDate);
-  const endDate = new Date(filters.endDate);
-
-  for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-    const baseValue = 4000 + Math.random() * 3000;
-    data.push({
-      date: d.toISOString().split("T")[0],
-      sales: Math.round(baseValue),
-    });
-  }
-
-  return data;
-}
 
 export function SalesChart() {
   const { data: authToken } = useAuthToken();
@@ -44,9 +28,9 @@ export function SalesChart() {
     queryFn: () => fetchSalesData({ token: authToken, isTotalSales: true }),
     enabled: !!authToken,
   });
-  if (isLoading) return <Loading message="Fetching total sales ..." />;
+  if (isLoading) return <Loading message="Fetching total sales..." />;
   if (isError) return <Error message="Failed to fetch total sales!" />;
-  console.log(totalSales, authToken);
+  // console.log(totalSales, authToken);
 
   return (
     <div className="overflow-x-auto w-full">
@@ -71,7 +55,6 @@ export function SalesChart() {
               contentStyle={{
                 backgroundColor: "rgba(255, 255, 255, 0.2)",
                 backdropFilter: "blur(4px)",
-
                 border: "1px solid gray",
                 borderRadius: "8px",
                 color: "hsl(var(--color-foreground))",
