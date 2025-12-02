@@ -21,7 +21,6 @@ export default function Dashboard() {
     phone: "",
   });
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
-
   const [paginationToken, setPaginationToken] = useState({});
   const [currentPage, setCurrentPage] = useState(0);
 
@@ -36,7 +35,7 @@ export default function Dashboard() {
   };
   if (isLoading) return <Loading message="Fetching token..." />;
   if (isError) return <Error message="Failed to fetch token!" />;
-  console.log("autobizz token: ", token);
+  // console.log("autobizz token: ", token);
 
   return (
     <div className="mx-auto max-w-7xl">

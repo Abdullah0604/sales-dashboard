@@ -1,5 +1,8 @@
 "use client";
 
+import { useAuthToken } from "@/hooks/useAuthToken";
+import { fetchSalesData } from "@/lib/api/sales";
+import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
   LineChart,
@@ -11,6 +14,8 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
+import { Loading } from "./Loading";
+import { Error } from "./Error";
 // Mock data generator
 function generateMockChartData(filters) {
   const data = [];
@@ -28,21 +33,33 @@ function generateMockChartData(filters) {
   return data;
 }
 
-export function SalesChart({ filters }) {
-  const data = useMemo(() => generateMockChartData(filters), [filters]);
+export function SalesChart() {
+  const { data: authToken } = useAuthToken();
+  const {
+    data: totalSales,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["sales-chart", authToken],
+    queryFn: () => fetchSalesData({ token: authToken, isTotalSales: true }),
+    enabled: !!authToken,
+  });
+  if (isLoading) return <Loading message="Fetching total sales ..." />;
+  if (isError) return <Error message="Failed to fetch total sales!" />;
+  console.log(totalSales, authToken);
 
   return (
     <div className="overflow-x-auto w-full">
       <div className="h-96 min-w-[600px]">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data}>
+          <LineChart data={totalSales}>
             <CartesianGrid
               strokeDasharray="3 3"
               stroke="hsl(var(--color-muted))"
             />
 
             <XAxis
-              dataKey="date"
+              dataKey="day"
               stroke="hsl(var(--color-muted-foreground))"
               style={{ fontSize: "12px" }}
             />
@@ -63,7 +80,7 @@ export function SalesChart({ filters }) {
             <Legend />
             <Line
               type="monotone"
-              dataKey="sales"
+              dataKey="totalSale"
               stroke={"black"}
               //   dot={false}
               activeDot={{ r: 5 }}
