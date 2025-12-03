@@ -14,10 +14,13 @@ export async function fetchSalesData(queries) {
   } = queries;
   // console.log(queries);
 
-  // this 'if block' is for total sales chart because filters, sorting and pagination will effect on only table not on chart.
+  const baseUrl = "https://autobizz-425913.uc.r.appspot.com/sales?";
+  const searchQueries = `startDate=${startDate}&endDate=${endDate}&priceMin=${minPrice}&email=${email}&phone=${phone}&sortBy=${sortBy}&sortOrder=${sortOrder}&after=${after}&before=${before}`;
+
+  // this 'if block' is for total sales chart because  sorting and pagination will effect on only table not on chart.
   if (isTotalSales) {
     const res = await fetch(
-      "https://autobizz-425913.uc.r.appspot.com/sales?startDate=2025-01-01&endDate=2025-01-31&priceMin=10&email=&phone=&sortBy=date&sortOrder=asc&after=&before=",
+      `${baseUrl}startDate=${startDate}&endDate=${endDate}&priceMin=${minPrice}&email=${email}&phone=${phone}&sortBy=date&sortOrder=asc&after=&before=`,
       {
         method: "GET",
         headers: {
@@ -30,22 +33,17 @@ export async function fetchSalesData(queries) {
     return data.results.TotalSales;
   }
 
-  const searchQueries = `startDate=${startDate}&endDate=${endDate}&priceMin=${minPrice}&email=${email}&phone=${phone}&sortBy=${sortBy}&sortOrder=${sortOrder}&after=${after}&before=${before}`;
-
-  const res = await fetch(
-    `https://autobizz-425913.uc.r.appspot.com/sales?${searchQueries}`,
-    {
-      method: "GET",
-      headers: {
-        "X-AUTOBIZZ-TOKEN": token,
-      },
-    }
-  );
+  const res = await fetch(`${baseUrl}${searchQueries}`, {
+    method: "GET",
+    headers: {
+      "X-AUTOBIZZ-TOKEN": token,
+    },
+  });
 
   if (!res.ok) throw new Error("Failed to fetch sales data");
 
   const data = await res.json();
-  // console.log(data.pagination);
+  console.log(data);
 
   return {
     paginationTokens: data.pagination,

@@ -17,20 +17,21 @@ import {
 import { Loading } from "./Loading";
 import { Error } from "./Error";
 
-export function SalesChart() {
+export function SalesChart({ filters }) {
   const { data: authToken } = useAuthToken();
   const {
     data: totalSales,
     isLoading,
     isError,
   } = useQuery({
-    queryKey: ["sales-chart", authToken],
-    queryFn: () => fetchSalesData({ token: authToken, isTotalSales: true }),
+    queryKey: ["sales-chart", authToken, filters],
+    queryFn: () =>
+      fetchSalesData({ ...filters, token: authToken, isTotalSales: true }),
     enabled: !!authToken,
   });
   if (isLoading) return <Loading message="Fetching total sales..." />;
   if (isError) return <Error message="Failed to fetch total sales!" />;
-  // console.log(totalSales, authToken);
+  console.log(totalSales);
 
   return (
     <div className="overflow-x-auto w-full">
