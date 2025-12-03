@@ -125,9 +125,20 @@ export function SalesTable({ filters }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data.salesData.map((item) => (
-              <SalesTableRow key={item._id} item={item} />
-            ))}
+            {data.salesData.length === 0 ? (
+              <TableRow>
+                <td
+                  colSpan={4}
+                  className="text-center py-6 text-muted-foreground text-sm"
+                >
+                  No sales records found
+                </td>
+              </TableRow>
+            ) : (
+              data.salesData.map((item) => (
+                <SalesTableRow key={item._id} item={item} />
+              ))
+            )}
           </TableBody>
         </Table>
       </div>

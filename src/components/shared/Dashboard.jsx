@@ -48,7 +48,7 @@ export default function Dashboard() {
           <h2 className="mb-6 text-xl font-semibold text-foreground">
             Total Sales Over Time
           </h2>
-          <SalesChart filters={filters} />
+          <SalesChart />
         </Card>
       </div>
       {/* Table */}
